@@ -2,6 +2,14 @@ use notify_rust::Notification;
 use std::path::Path;
 use std::process::Command;
 
+/// 通知内容结构体
+pub struct NotificationContent {
+    pub title: String,
+    pub subtitle: String,
+    pub body: String,
+    pub sound: Option<String>,
+}
+
 /// 从 cwd 提取项目名作为通知标题
 fn extract_project_name(cwd: &str) -> &str {
     Path::new(cwd)
@@ -11,13 +19,24 @@ fn extract_project_name(cwd: &str) -> &str {
 }
 
 /// 发送通知
-pub fn notify(cwd: &str, subtitle: &str) {
-    let title = extract_project_name(cwd);
-
-    let _ = Notification::new()
-        .summary(title)
-        .subtitle(subtitle)
-        .show();
+pub fn notify(content: NotificationContent) {
+    match &content.sound {
+        Some(sound) => {
+            let _ = Notification::new()
+                .summary(&content.title)
+                .subtitle(&content.subtitle)
+                .body(&content.body)
+                .sound_name(sound)
+                .show();
+        }
+        None => {
+            let _ = Notification::new()
+                .summary(&content.title)
+                .subtitle(&content.subtitle)
+                .body(&content.body)
+                .show();
+        }
+    }
 }
 
 /// 跳转到 Ghostty 终端（双重 fallback）
