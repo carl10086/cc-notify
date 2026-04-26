@@ -21,11 +21,13 @@ fn build_notification_content(
     notification_type: Option<&str>,
 ) -> NotificationContent {
     let title = extract_project_name(cwd);
-    let (subtitle, sound) = match event_name {
+    let (title_prefix, subtitle, sound, body) = match event_name {
         "Stop" => {
             let reason_text = reason.unwrap_or("Unknown reason");
-            let prefix = if permission_mode == "ask" { "🔒 " } else { "" };
-            (format!("{}Stop: {}", prefix, reason_text), Some("Default".to_string()))
+            let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
+            let subtitle = format!("{}Stop: {}", lock_prefix, reason_text);
+            let body = format!("{}\n{}", reason_text, cwd);
+            ("⏹️", subtitle, Some("Default".to_string()), body)
         }
         "Notification" => {
             let sub_type = notification_type.unwrap_or("Notification");
@@ -35,19 +37,26 @@ fn build_notification_content(
                 "action" => ("Action Required", "Default"),
                 _ => ("Notification", "Default"),
             };
-            let prefix = if permission_mode == "ask" { "🔒 " } else { "" };
-            (format!("Notification: {}{}", prefix, detail), Some(sound.to_string()))
+            let subtitle = if permission_mode == "ask" {
+                format!("🔒 Notification: {}", detail)
+            } else {
+                format!("Notification: {}", detail)
+            };
+            let body = format!("{}\n{}", detail, cwd);
+            ("🔔", subtitle, Some(sound.to_string()), body)
         }
         _ => {
-            let prefix = if permission_mode == "ask" { "🔒 " } else { "" };
-            (format!("{}{}", prefix, event_name), None)
+            let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
+            let subtitle = format!("{}{}", lock_prefix, event_name);
+            let body = cwd.to_string();
+            ("❓", subtitle, None, body)
         }
     };
 
     NotificationContent {
-        title: title.to_string(),
+        title: format!("{} {}", title_prefix, title),
         subtitle,
-        body: format!("cwd: {}", cwd),
+        body,
         sound,
     }
 }
@@ -67,8 +76,9 @@ mod tests {
     #[test]
     fn test_stop_with_reason() {
         let content = build_notification_content("Stop", "/Users/carlyu/my-project", Some("Task completed"), "allow", None);
-        assert_eq!(content.title, "my-project");
+        assert_eq!(content.title, "⏹️ my-project");
         assert_eq!(content.subtitle, "Stop: Task completed");
+        assert_eq!(content.body, "Task completed\n/Users/carlyu/my-project");
         assert_eq!(content.sound, Some("Default".to_string()));
     }
 
@@ -76,31 +86,39 @@ mod tests {
     fn test_stop_without_reason() {
         let content = build_notification_content("Stop", "/Users/carlyu/my-project", None, "allow", None);
         assert_eq!(content.subtitle, "Stop: Unknown reason");
+        assert_eq!(content.body, "Unknown reason\n/Users/carlyu/my-project");
     }
 
     #[test]
     fn test_stop_with_permission_ask() {
         let content = build_notification_content("Stop", "/Users/carlyu/my-project", Some("Task completed"), "ask", None);
+        assert_eq!(content.title, "⏹️ my-project");
         assert_eq!(content.subtitle, "🔒 Stop: Task completed");
     }
 
     #[test]
     fn test_notification_permission() {
         let content = build_notification_content("Notification", "/Users/carlyu/my-project", None, "allow", Some("permission"));
+        assert_eq!(content.title, "🔔 my-project");
         assert_eq!(content.subtitle, "Notification: Permission Required");
+        assert_eq!(content.body, "Permission Required\n/Users/carlyu/my-project");
         assert_eq!(content.sound, Some("Breeze".to_string()));
     }
 
     #[test]
     fn test_notification_input() {
         let content = build_notification_content("Notification", "/Users/carlyu/my-project", None, "allow", Some("input"));
+        assert_eq!(content.title, "🔔 my-project");
         assert_eq!(content.subtitle, "Notification: Waiting for input");
+        assert_eq!(content.body, "Waiting for input\n/Users/carlyu/my-project");
     }
 
     #[test]
     fn test_unknown_event() {
         let content = build_notification_content("UnknownEvent", "/Users/carlyu/my-project", None, "allow", None);
+        assert_eq!(content.title, "❓ my-project");
         assert_eq!(content.subtitle, "UnknownEvent");
+        assert_eq!(content.body, "/Users/carlyu/my-project");
     }
 
     #[test]
