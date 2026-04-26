@@ -25,7 +25,12 @@ fn main() {
         let cwd = std::env::current_dir()
             .map(|p| p.to_string_lossy().to_string())
             .unwrap_or_else(|_| String::from("."));
-        notifier::notify(&cwd, "Test Notification");
+        notifier::notify(notifier::NotificationContent {
+            title: "ccnotify".to_string(),
+            subtitle: "Test Notification".to_string(),
+            body: format!("cwd: {}", cwd),
+            sound: None,
+        });
         return;
     }
 
@@ -52,5 +57,11 @@ fn main() {
         Err(_) => return,
     };
 
-    event::handle(event_name, &payload.cwd, payload.notification_type.as_deref());
+    event::handle(
+        event_name,
+        &payload.cwd,
+        payload.reason.as_deref(),
+        &payload.permission_mode,
+        payload.notification_type.as_deref(),
+    );
 }
