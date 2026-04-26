@@ -11,6 +11,7 @@ pub struct NotificationContent {
 }
 
 /// 从 cwd 提取项目名作为通知标题
+#[allow(dead_code)]
 fn extract_project_name(cwd: &str) -> &str {
     Path::new(cwd)
         .file_name()
@@ -41,6 +42,7 @@ pub fn notify(content: NotificationContent) {
 
 /// 跳转到 Ghostty 终端（双重 fallback）
 /// 注意：macOS 通知中心不支持点击回调，此功能暂未启用
+#[allow(dead_code)]
 fn jump_to_ghostty_terminal(cwd: &str) {
     // 尝试 1: 精确匹配 working directory
     let script_precise = format!(
@@ -63,6 +65,7 @@ fn jump_to_ghostty_terminal(cwd: &str) {
 }
 
 /// 执行 osascript，成功返回 Ok，失败返回 Err
+#[allow(dead_code)]
 fn try_run_osascript(script: &str) -> Result<(), ()> {
     Command::new("osascript")
         .args(["-e", script])

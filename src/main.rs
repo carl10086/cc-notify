@@ -4,13 +4,14 @@ mod event;
 mod notifier;
 
 #[derive(Debug, serde::Deserialize)]
+#[allow(dead_code)]
 struct HookPayload {
     session_id: String,
     transcript_path: String,
     cwd: String,
-    permission_mode: String,           // 新增
+    permission_mode: String,
     hook_event_name: String,
-    reason: Option<String>,           // 新增：Stop 事件特有
+    reason: Option<String>,
     #[serde(default)]
     notification_type: Option<String>,
     #[serde(default)]
