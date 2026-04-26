@@ -1,0 +1,20 @@
+# Rust build output
+/target/
+refer/
+**/*.rs.bk
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
