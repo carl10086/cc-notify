@@ -8,6 +8,8 @@
 
 **Tech Stack:** Rust
 
+**TDD 原则:** 先写测试（红），再改实现（绿），保持代码随时可运行
+
 ---
 
 ## 文件变更
@@ -16,85 +18,7 @@
 
 ---
 
-### Task 1: 更新 build_notification_content 函数
-
-**Files:**
-- Modify: `src/event.rs:15-53`
-
-- [ ] **Step 1: 修改 Stop 事件分支**
-
-将 Stop 事件返回值从 `(subtitle, sound)` 改为 `(title_prefix, subtitle, sound, body)`：
-
-```rust
-"Stop" => {
-    let reason_text = reason.unwrap_or("Unknown reason");
-    let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
-    let subtitle = format!("{}Stop: {}", lock_prefix, reason_text);
-    let body = format!("{}\n{}", reason_text, cwd);
-    ("⏹️", subtitle, Some("Default".to_string()), body)
-}
-```
-
-- [ ] **Step 2: 修改 Notification 事件分支**
-
-```rust
-"Notification" => {
-    let sub_type = notification_type.unwrap_or("Notification");
-    let (detail, sound) = match sub_type {
-        "permission" => ("Permission Required", "Breeze"),
-        "input" => ("Waiting for input", "Default"),
-        "action" => ("Action Required", "Default"),
-        _ => ("Notification", "Default"),
-    };
-    let subtitle = if permission_mode == "ask" {
-        format!("🔒 Notification: {}", detail)
-    } else {
-        format!("Notification: {}", detail)
-    };
-    let body = format!("{}\n{}", detail, cwd);
-    ("🔔", subtitle, Some(sound.to_string()), body)
-}
-```
-
-- [ ] **Step 3: 修改未知事件分支**
-
-```rust
-_ => {
-    let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
-    let subtitle = format!("{}{}", lock_prefix, event_name);
-    let body = cwd.to_string();
-    ("❓", subtitle, None, body)
-}
-```
-
-- [ ] **Step 4: 修改返回语句**
-
-将 `NotificationContent` 构建改为：
-
-```rust
-NotificationContent {
-    title: format!("{} {}", title_prefix, title),
-    subtitle,
-    body,
-    sound,
-}
-```
-
-- [ ] **Step 5: 运行测试验证**
-
-Run: `cargo test 2>&1`
-Expected: 10 个测试全部 PASS
-
-- [ ] **Step 6: Commit**
-
-```bash
-git add src/event.rs
-git commit -m "feat(ui): add emoji prefixes and enriched body content"
-```
-
----
-
-### Task 2: 更新测试用例
+### Task 1: 更新测试用例（TDD 红）
 
 **Files:**
 - Modify: `src/event.rs:63-122`
@@ -171,16 +95,99 @@ fn test_unknown_event() {
 }
 ```
 
-- [ ] **Step 7: 运行测试验证**
+- [ ] **Step 7: 运行测试验证（预期失败）**
+
+Run: `cargo test 2>&1`
+Expected: 编译失败或测试失败（因为实现还未更新）
+
+---
+
+### Task 2: 更新 build_notification_content 实现（TDD 绿）
+
+**Files:**
+- Modify: `src/event.rs:15-53`
+
+- [ ] **Step 1: 修改 Stop 事件分支**
+
+将 Stop 事件返回值从 `(subtitle, sound)` 改为 `(title_prefix, subtitle, sound, body)`：
+
+```rust
+"Stop" => {
+    let reason_text = reason.unwrap_or("Unknown reason");
+    let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
+    let subtitle = format!("{}Stop: {}", lock_prefix, reason_text);
+    let body = format!("{}\n{}", reason_text, cwd);
+    ("⏹️", subtitle, Some("Default".to_string()), body)
+}
+```
+
+- [ ] **Step 2: 修改 Notification 事件分支**
+
+```rust
+"Notification" => {
+    let sub_type = notification_type.unwrap_or("Notification");
+    let (detail, sound) = match sub_type {
+        "permission" => ("Permission Required", "Breeze"),
+        "input" => ("Waiting for input", "Default"),
+        "action" => ("Action Required", "Default"),
+        _ => ("Notification", "Default"),
+    };
+    let subtitle = if permission_mode == "ask" {
+        format!("🔒 Notification: {}", detail)
+    } else {
+        format!("Notification: {}", detail)
+    };
+    let body = format!("{}\n{}", detail, cwd);
+    ("🔔", subtitle, Some(sound.to_string()), body)
+}
+```
+
+- [ ] **Step 3: 修改未知事件分支**
+
+```rust
+_ => {
+    let lock_prefix = if permission_mode == "ask" { "🔒 " } else { "" };
+    let subtitle = format!("{}{}", lock_prefix, event_name);
+    let body = cwd.to_string();
+    ("❓", subtitle, None, body)
+}
+```
+
+- [ ] **Step 4: 修改返回语句**
+
+将 `NotificationContent` 构建改为：
+
+```rust
+NotificationContent {
+    title: format!("{} {}", title_prefix, title),
+    subtitle,
+    body,
+    sound,
+}
+```
+
+- [ ] **Step 5: 运行测试验证（预期通过）**
 
 Run: `cargo test 2>&1`
 Expected: 10 个测试全部 PASS
 
-- [ ] **Step 8: Commit**
+---
+
+### Task 3: 提交代码
+
+**Files:**
+- 无文件变更
+
+- [ ] **Step 1: 运行完整测试**
+
+Run: `cargo test 2>&1 && cargo check 2>&1`
+Expected: 所有测试通过，无警告
+
+- [ ] **Step 2: Commit**
 
 ```bash
 git add src/event.rs
-git commit -m "test: update tests for UI enhancement"
+git commit -m "feat(ui): add emoji prefixes and enriched body content"
 ```
 
 ---
@@ -191,12 +198,12 @@ git commit -m "test: update tests for UI enhancement"
 
 | Spec 要求 | 对应 Task |
 |-----------|-----------|
-| Stop 标题显示 ⏹️ emoji | Task 1 |
-| Notification 标题显示 🔔 emoji | Task 1 |
-| 未知事件显示 ❓ emoji | Task 1 |
-| body 显示 reason + cwd | Task 1 |
-| body 显示 notification_type + cwd | Task 1 |
-| 🔒 前缀保留 | Task 1 |
+| Stop 标题显示 ⏹️ emoji | Task 2 |
+| Notification 标题显示 🔔 emoji | Task 2 |
+| 未知事件显示 ❓ emoji | Task 2 |
+| body 显示 reason + cwd | Task 2 |
+| body 显示 notification_type + cwd | Task 2 |
+| 🔒 前缀保留 | Task 2 |
 
 **覆盖率：100%**
 
@@ -205,6 +212,12 @@ git commit -m "test: update tests for UI enhancement"
 - [x] 无 "TBD"/"TODO"/"implement later"
 - [x] 每个步骤包含完整代码
 - [x] 无模糊描述
+
+### 3. TDD 流程
+
+- [x] Task 1 先运行测试（预期失败）
+- [x] Task 2 实现功能（预期通过）
+- [x] Task 3 提交
 
 ---
 
