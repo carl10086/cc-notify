@@ -1,4 +1,3 @@
-use notify_rust::Notification;
 use std::path::Path;
 use std::process::Command;
 
@@ -19,25 +18,29 @@ fn extract_project_name(cwd: &str) -> &str {
         .unwrap_or(cwd)
 }
 
-/// 发送通知
+/// 发送通知（使用 osascript，避免 macOS 签名权限问题）
 pub fn notify(content: NotificationContent) {
-    match &content.sound {
-        Some(sound) => {
-            let _ = Notification::new()
-                .summary(&content.title)
-                .subtitle(&content.subtitle)
-                .body(&content.body)
-                .sound_name(sound)
-                .show();
-        }
-        None => {
-            let _ = Notification::new()
-                .summary(&content.title)
-                .subtitle(&content.subtitle)
-                .body(&content.body)
-                .show();
-        }
-    }
+    let sound_clause = match &content.sound {
+        Some(sound) if sound != "Default" => format!("sound name \"{}\"", sound),
+        _ => String::new(),
+    };
+
+    let script = format!(
+        r#"display notification "{}" with title "{}" subtitle "{}" {}"#,
+        escape_applescript(&content.body),
+        escape_applescript(&content.title),
+        escape_applescript(&content.subtitle),
+        sound_clause
+    );
+
+    let _ = Command::new("osascript")
+        .args(["-e", &script])
+        .output();
+}
+
+/// 转义 AppleScript 字符串中的特殊字符
+fn escape_applescript(s: &str) -> String {
+    s.replace('"', "\\").replace('\\', "\\\\")
 }
 
 /// 跳转到 Ghostty 终端（双重 fallback）
