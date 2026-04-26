@@ -8,9 +8,13 @@ struct HookPayload {
     session_id: String,
     transcript_path: String,
     cwd: String,
+    permission_mode: String,           // 新增
     hook_event_name: String,
+    reason: Option<String>,           // 新增：Stop 事件特有
     #[serde(default)]
     notification_type: Option<String>,
+    #[serde(default)]
+    user_prompt: Option<String>,
 }
 
 fn main() {
